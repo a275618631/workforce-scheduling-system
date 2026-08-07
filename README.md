@@ -32,7 +32,7 @@ Personnel Registry
 Scheduling Engine
   → Monthly workspace
   → Rule-based baseline generation
-  → Segment and shift model (8h / 12h / split)
+  → Shift and segment model (designed to support multiple patterns)
   → Manual override and locked-duty support
 
 Validation Layer
@@ -56,7 +56,7 @@ Calendar View
 Each scheduling constraint is represented as a distinct rule with a code, a description, and a classification (violation vs. warning). This makes the system auditable — any flagged assignment can be traced to a specific rule — and allows rules to be added or modified without changing the core generation logic.
 
 **Segment model for shift flexibility**
-Rather than hardcoding shift patterns, the system uses a segment model that supports 8-hour three-shift patterns, 12-hour day/night patterns, and split segments (e.g., two people sharing a 12-hour coverage window). This reflects real operational flexibility without overfitting to a single pattern.
+Rather than hardcoding shift patterns, the system is designed around a segment model intended to support multiple shift configurations. This separation avoids over-fitting to a single fixed pattern and allows coverage windows to be composed from individual segments.
 
 **Status lifecycle for personnel**
 Personnel carry a status (ACTIVE / INACTIVE / ON_LEAVE) that gates their eligibility for assignment. The system does not silently skip ineligible personnel; it surfaces them explicitly in the swap candidate view with the reason for exclusion.

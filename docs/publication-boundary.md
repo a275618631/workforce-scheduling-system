@@ -25,7 +25,7 @@ The architecture, engineering decisions, and validation approach are general eno
 
 ## Data
 
-All personnel records used in development are synthetic: generated names, sequential IDs (S001–S030), and anonymized attributes. The unit name used in synthetic examples ("文山第一派出所") is a public geographic reference used only to provide a realistic structure for testing; it does not represent real operational data from that organization.
+All personnel records used in development are synthetic: anonymized identifiers, generated names, and fabricated attributes. No real personnel records, real unit configurations, or real operational data were used or are present in this repository.
 
 ## Private implementation
 
