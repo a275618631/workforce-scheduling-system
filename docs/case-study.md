@@ -4,7 +4,7 @@
 
 Rotating-shift scheduling in 24-hour operational environments requires satisfying simultaneous constraints: daily coverage minimums by shift, rest periods between assignments, qualification requirements for specific roles, organizational leave policies, and the ability to handle exceptions such as locked duties and manual overrides.
 
-The original use case was a public-sector environment with multiple shift patterns (8-hour three-shift and 12-hour day/night), 20–30 active personnel per scheduling unit, and monthly planning cycles. Manual scheduling was the existing practice.
+The original use case was a multi-person rotating-shift public-sector environment with monthly planning cycles. Manual scheduling was the existing practice.
 
 ## Constraints
 
@@ -25,7 +25,7 @@ The system is organized into four layers:
 
 **Personnel Registry** stores staff records, qualifications, status lifecycle, and scheduling preferences.
 
-**Scheduling Engine** generates a monthly baseline from rules, supports both 8-hour and 12-hour shift patterns, models split segments (allowing two personnel to cover one 12-hour duty window), and enforces locked assignments before generating the remainder.
+**Scheduling Engine** generates a monthly baseline from rules, is designed to support multiple shift patterns and split-segment coverage, and enforces locked assignments before generating the remainder.
 
 **Validation Layer** evaluates every generated assignment against all active rules, classifies each outcome as a violation, warning, or incomplete state, and surfaces per-rule explanations for any flagged assignment.
 
@@ -49,15 +49,9 @@ The system is organized into four layers:
 
 ## Validation
 
-56 automated test cases covering:
-- Personnel data transfer and import
-- Scheduling rule logic
-- Dynamic feature behavior
-- Monthly workspace state management
-- Calendar overview correctness
-- Deployment and runtime behavior
+The underlying private implementation reached 56 validated automated test cases covering personnel data transfer, scheduling rule logic, dynamic feature behavior, monthly workspace state, calendar overview, and deployment behavior.
 
-All tests run against synthetic data. No real personnel or operational data is included.
+All tests were run against synthetic data. No real personnel or operational data is included.
 
 ## Current Status
 
