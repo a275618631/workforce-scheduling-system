@@ -1,95 +1,54 @@
-# Constraint-Based Workforce Scheduling System
+# 規則式人力排班系統規格設計 (Workforce Scheduling System Specification)
 
-A rule-driven scheduling and operations system for complex rotating-shift environments.
+[English Version](README.en.md) · [案例研究 (Case Study)](docs/case-study.md) · [公開邊界說明 (Publication Boundary)](docs/publication-boundary.md)
+
+> **專案定位**：架構規格設計與業務約束模型案例研究。  
+> 展示如何將連續運作單位（輪班生產、公共勤務與緊急應變）複雜的人事工時規章，抽象為可形式化驗證的約束求解規則模型。
 
 ---
 
-## Problem
+## 1. 核心業務難題
 
-Rotating-shift workforce scheduling in operational contexts — such as 24-hour public-service environments — involves constraints that cannot be reduced to a simple timetable generator. Personnel have varying qualifications, preferred start times, and leave requirements. Duty assignments must satisfy coverage minimums, rest-period rules, and organizational policies. Manual scheduling is error-prone at scale, and violations may not surface until a shift is already underway.
+在需要 24 小時連續運作的營運環境中，排班排程面臨以下多維度約束：
+- **法規與休息限制**：連續執勤天數上限、兩班次間最短休息間隔（如至少間隔 11 小時）、每週強制例假。
+- **時段人力覆蓋**：尖峰與離峰時段對特定專業資格人力的最低在崗門檻。
+- **排班偏好與請假**：人員預排休假、輪班偏好與臨時缺勤補位。
+- **人工例外鎖定**：特定指定專案或特殊勤務需人工鎖定班次，且不得被自動重排覆蓋。
 
-The system addresses this by modeling constraints explicitly, generating baseline schedules from rules, and surfacing violations and warnings as first-class states rather than silent failures.
+---
 
-## What this demonstrates
+## 2. 規則引擎約束全景模型
 
-| Capability | Evidence |
-| --- | --- |
-| Requirements analysis | Constraints modeled from operational policy documentation |
-| Rule engine design | Coverage, rest, qualification, locked-duty, and organizational rules |
-| Personnel abstraction | Status lifecycle, qualifications, preferences |
-| Calendar workflow | Monthly generation, day/shift/segment granularity |
-| Violation handling | Red/warning/incomplete states with per-rule explanations |
-| Iterative evolution | Multiple delivery phases building on a stable core |
-| Validation | The underlying private implementation reached 56 validated automated test cases |
-
-## Architecture
+本專案將業務規章收斂為三層規則約束矩陣：
 
 ```text
-Personnel Registry
-  → Qualification / Status model
-  → Preference model
+人員登記模型 (Personnel Model)
+  ├── 專業資格與在職狀態 (Qualification / Status)
+  └── 請假與排休偏好 (Leave / Preferences)
 
-Scheduling Engine
-  → Monthly workspace
-  → Rule-based baseline generation
-  → Shift and segment model (designed to support multiple patterns)
-  → Manual override and locked-duty support
+排班核心規格 (Scheduling Core Model)
+  ├── 月度工作區 (Monthly Workspace)
+  ├── 時段與班次模型 (Segment & Shift Model)
+  └── 人工強制覆寫與鎖定 (Manual Override & Locked-duty)
 
-Validation Layer
-  → Coverage check (per shift, per day)
-  → Rest-period check
-  → Duplicate assignment check
-  → Qualification constraint check
-  → Organizational rule check
-  → Violation / Warning / Incomplete classification
-
-Calendar View
-  → Month overview
-  → Day detail
-  → Swap candidate visibility
-  → Export (CSV / JSON / Excel XLSX)
+約束校驗矩陣 (Constraint Validation Matrix)
+  ├── [硬性約束] 班次覆蓋率檢查 (Coverage Check)
+  ├── [硬性約束] 最短休息間隔檢查 (Rest-period Check)
+  ├── [硬性約束] 重複指派與衝突排查 (Conflict Check)
+  └── [軟性約束] 偏好滿足度與公平輪調計算 (Fairness Scoring)
 ```
 
-## Key Engineering Decisions
+---
 
-**Explicit constraint modeling over implicit rules**
-Each scheduling constraint is represented as a distinct rule with a code, a description, and a classification (violation vs. warning). This makes the system auditable — any flagged assignment can be traced to a specific rule — and allows rules to be added or modified without changing the core generation logic.
+## 3. 違規分級與可解釋性
 
-**Segment model for shift flexibility**
-Rather than hardcoding shift patterns, the system is designed around a segment model intended to support multiple shift configurations. This separation avoids over-fitting to a single fixed pattern and allows coverage windows to be composed from individual segments.
+系統設計將班表狀態歸因為可解釋的診斷碼：
+- **紅燈 (Violation)**：違反硬性約束（如間隔不足 11 小時、超時連續執勤），系統禁止發布並標明衝突人員與規則代號。
+- **黃燈 (Warning)**：違反軟性約束（如未滿足偏好休假、輪替間隔不均），提供調度主管調整建議。
+- **未完成 (Incomplete)**：人力覆蓋率不足，提示缺工時段與建議遞補名單。
 
-**Status lifecycle for personnel**
-Personnel carry a status (ACTIVE / INACTIVE / ON_LEAVE) that gates their eligibility for assignment. The system does not silently skip ineligible personnel; it surfaces them explicitly in the swap candidate view with the reason for exclusion.
+---
 
-**Iterative delivery phases**
-The system was built in phases: personnel management → baseline generation → rule validation → manual assignment and swap → calendar overview → export. Each phase extended the core without breaking earlier functionality.
-
-## Validation
-
-The underlying private implementation reached **56 validated automated test cases**, exercising personnel data transfer, scheduling logic, dynamic features, monthly workspace state, calendar overview, and deployment behavior.
-
-All sample data used during development is **synthetic and anonymized**. No real personnel records, duty rosters, or operational data are included in this repository or referenced in validation.
-
-## Current Status
-
-**Working system — private implementation**
-
-The scheduling engine, rule validation, calendar view, and export functions are implemented and validated in the private repository. This companion documents the architecture and engineering approach.
-
-## Privacy & Publication Boundary
-
-This companion repository contains:
-- Architecture documentation
-- Engineering decision rationale
-- Anonymized synthetic examples (where included)
-
-It does not contain:
-- The private source code
-- Real personnel records
-- Real duty rosters or shift assignments
-- Non-public operational policies
-- Any account, credential, or access material
-
-The system was originally developed around a rotating-shift public-sector scheduling use case. All identifying operational details remain private.
-
-→ [Publication Boundary](docs/publication-boundary.md) | [Case Study](docs/case-study.md)
+## 4. 公開展示邊界說明
+- **本公開倉庫定位**：專案架構規格設計、案例分析（Case Study）與約束模型展示。
+- **實作代碼與測試**：底層 C#/Python 求解器實作與 56 項私有回歸測試保留於內部研發環境，公開版本不包含具體員工名冊與組織機密資料。
