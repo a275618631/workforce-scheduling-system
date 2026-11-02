@@ -1,95 +1,49 @@
-# Constraint-Based Workforce Scheduling System
+# 規則式人力排班系統｜把複雜班表變成可檢查的規則
 
-A rule-driven scheduling and operations system for complex rotating-shift environments.
+24 小時輪班不是把人名填進月曆就好。每個人有不同資格、休假需求與可上班時段；班次要符合最低人力、休息間隔與工作規範，還要容許主管手動指定或鎖定班次。
 
----
+我將這些條件拆成明確的規則，設計能產生基礎班表、指出違規原因、處理人工調整並用月曆呈現的排班系統。核心目標不是追求一鍵排出所有班次，而是**讓每次排班決策可以被看懂、檢查與修改**。
 
-## Problem
+## 系統涵蓋的工作
 
-Rotating-shift workforce scheduling in operational contexts — such as 24-hour public-service environments — involves constraints that cannot be reduced to a simple timetable generator. Personnel have varying qualifications, preferred start times, and leave requirements. Duty assignments must satisfy coverage minimums, rest-period rules, and organizational policies. Manual scheduling is error-prone at scale, and violations may not surface until a shift is already underway.
-
-The system addresses this by modeling constraints explicitly, generating baseline schedules from rules, and surfacing violations and warnings as first-class states rather than silent failures.
-
-## What this demonstrates
-
-| Capability | Evidence |
+| 功能 | 設計內容 |
 | --- | --- |
-| Requirements analysis | Constraints modeled from operational policy documentation |
-| Rule engine design | Coverage, rest, qualification, locked-duty, and organizational rules |
-| Personnel abstraction | Status lifecycle, qualifications, preferences |
-| Calendar workflow | Monthly generation, day/shift/segment granularity |
-| Violation handling | Red/warning/incomplete states with per-rule explanations |
-| Iterative evolution | Multiple delivery phases building on a stable core |
-| Validation | The underlying private implementation reached 56 validated automated test cases |
+| 人員與資格 | 追蹤在職、停用與請假狀態，依資格判斷是否可排入特定班次 |
+| 基礎排班 | 依班次與時段需求建立月排班工作區 |
+| 約束檢查 | 檢查最低人力、休息間隔、重複指派及資格不符 |
+| 人工調整 | 支援手動指定、鎖定班次與換班候選人檢視 |
+| 違規說明 | 將問題分成違規、警告或資料未完整，指出對應規則 |
+| 月曆與匯出 | 以月份及日期檢視排班，支援 CSV、JSON、Excel 等輸出設計 |
 
-## Architecture
+## 設計上最重要的三個決定
+
+**1. 規則要能追溯。** 不把所有限制硬寫在同一段排班邏輯，而是為每個限制建立可辨識的規則與原因。發現某人不能排進班次時，使用者應知道是哪個條件沒有符合。
+
+**2. 班次要能拆分。** 使用時段片段（Segment）描述排班需求，而不是把特定輪班型態寫死，方便日後加入不同的工作模式。
+
+**3. 人工決策也是正式流程。** 鎖定班次、臨時換班與休假異動都會影響後續安排。系統要能辨認這些操作，並在重新計算時保留需要人工處理的情況。
+
+## 架構概要
 
 ```text
-Personnel Registry
-  → Qualification / Status model
-  → Preference model
-
-Scheduling Engine
-  → Monthly workspace
-  → Rule-based baseline generation
-  → Shift and segment model (designed to support multiple patterns)
-  → Manual override and locked-duty support
-
-Validation Layer
-  → Coverage check (per shift, per day)
-  → Rest-period check
-  → Duplicate assignment check
-  → Qualification constraint check
-  → Organizational rule check
-  → Violation / Warning / Incomplete classification
-
-Calendar View
-  → Month overview
-  → Day detail
-  → Swap candidate visibility
-  → Export (CSV / JSON / Excel XLSX)
+人員、資格、請假與偏好
+          ↓
+    排班規則模型
+          ↓
+   月排班與人工調整
+          ↓
+約束檢查（違規／警告／未完成）
+          ↓
+     月曆檢視與匯出
 ```
 
-## Key Engineering Decisions
+完整私人實作依序完成了人員管理、基礎排班、規則驗證、人工指派與換班、月曆及匯出等階段，累積 **56 項已驗證的自動化測試案例**。這個數字對應私人實作的測試，不代表公開倉目前可以直接執行同一套測試。
 
-**Explicit constraint modeling over implicit rules**
-Each scheduling constraint is represented as a distinct rule with a code, a description, and a classification (violation vs. warning). This makes the system auditable — any flagged assignment can be traced to a specific rule — and allows rules to be added or modified without changing the core generation logic.
+## 從哪裡看起
 
-**Segment model for shift flexibility**
-Rather than hardcoding shift patterns, the system is designed around a segment model intended to support multiple shift configurations. This separation avoids over-fitting to a single fixed pattern and allows coverage windows to be composed from individual segments.
+這份公開倉以設計案例和合成資料說明如何處理排班條件，沒有公開原始私人排班程式或真實人員班表。
 
-**Status lifecycle for personnel**
-Personnel carry a status (ACTIVE / INACTIVE / ON_LEAVE) that gates their eligibility for assignment. The system does not silently skip ineligible personnel; it surfaces them explicitly in the swap candidate view with the reason for exclusion.
+- [案例研究](docs/case-study.md)：需求如何拆成系統功能與工程決策。
+- [公開內容說明](docs/publication-boundary.md)：公開案例和原始開發內容的區分。
 
-**Iterative delivery phases**
-The system was built in phases: personnel management → baseline generation → rule validation → manual assignment and swap → calendar overview → export. Each phase extended the core without breaking earlier functionality.
-
-## Validation
-
-The underlying private implementation reached **56 validated automated test cases**, exercising personnel data transfer, scheduling logic, dynamic features, monthly workspace state, calendar overview, and deployment behavior.
-
-All sample data used during development is **synthetic and anonymized**. No real personnel records, duty rosters, or operational data are included in this repository or referenced in validation.
-
-## Current Status
-
-**Working system — private implementation**
-
-The scheduling engine, rule validation, calendar view, and export functions are implemented and validated in the private repository. This companion documents the architecture and engineering approach.
-
-## Privacy & Publication Boundary
-
-This companion repository contains:
-- Architecture documentation
-- Engineering decision rationale
-- Anonymized synthetic examples (where included)
-
-It does not contain:
-- The private source code
-- Real personnel records
-- Real duty rosters or shift assignments
-- Non-public operational policies
-- Any account, credential, or access material
-
-The system was originally developed around a rotating-shift public-sector scheduling use case. All identifying operational details remain private.
-
-→ [Publication Boundary](docs/publication-boundary.md) | [Case Study](docs/case-study.md)
+這個作品主要呈現**需求分析、規則建模、例外處理與可驗證的系統設計**。即使應用情境換成製造業、客服輪值或維修值班，也能用相同方法辨認各種排班限制。
